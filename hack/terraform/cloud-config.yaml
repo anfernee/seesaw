@@ -1,0 +1,33 @@
+#cloud-config
+apt:
+  primary:
+  - arches: [default]
+    uri: http://us-west1.gce.archive.ubuntu.com/ubuntu/
+write_files:
+  - content: |
+      ${startup_script}
+    path: /tmp/startup.sh
+    permissions: '0755'
+    encoding: base64
+  - path: /etc/netplan/90-static-ip.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          ens192:
+            addresses:
+            - ${node_ip}/${netmask}
+            gateway4: ${gateway}
+            nameservers:
+              addresses: [8.8.8.8]
+          ens224:
+            addresses:
+            - ${vip_ip}/${netmask}
+            gateway4: ${gateway}
+            nameservers:
+              addresses: [8.8.8.8]
+runcmd:
+- netplan apply
+- VLAN_IP=${vlan_ip} VSERVER_IP=${vserver_ip} NODE_IP=${node_ip} PEER_IP=${peer_ip} VIP_IP=${vip_ip} NETMASK=${netmask} /tmp/startup.sh
+- echo done > /tmp/done
+
